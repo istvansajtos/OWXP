@@ -307,7 +307,7 @@ public class CustomWikiActivityInterpreter extends BaseSocialActivityInterpreter
 		_wikiPageResourceLocalService = wikiPageResourceLocalService;
 	}
 	
-	private static final String _SELECTOR = "CUSTOM";
+	private static final String _SELECTOR = "GENERAL";
 
 	private static final String[] _CLASS_NAMES = {WikiPage.class.getName()};
 
