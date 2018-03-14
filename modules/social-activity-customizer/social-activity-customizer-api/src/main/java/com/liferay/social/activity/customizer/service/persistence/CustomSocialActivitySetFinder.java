@@ -24,4 +24,7 @@ import aQute.bnd.annotation.ProviderType;
 public interface CustomSocialActivitySetFinder {
 	public java.util.List<com.liferay.social.kernel.model.SocialActivitySet> findByU_C(
 		long userId, long classNameId, int begin, int end);
+
+	public java.util.List<com.liferay.social.kernel.model.SocialActivitySet> findByU_C_T(
+		long userId, long classNameId, long[] types);
 }
