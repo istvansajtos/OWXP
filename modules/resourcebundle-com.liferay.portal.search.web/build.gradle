@@ -1,5 +1,0 @@
-dependencies {
-	compile 'org.osgi:org.osgi.compendium:5.0.0'
-
-	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
-}

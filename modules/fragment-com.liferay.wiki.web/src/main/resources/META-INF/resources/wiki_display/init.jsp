@@ -18,13 +18,9 @@
 
 <%@ page import="com.liferay.wiki.configuration.WikiGroupServiceConfiguration" %><%@
 page import="com.liferay.wiki.exception.NoSuchNodeException" %><%@
-page import="com.liferay.wiki.model.WikiNode" %><%@
-page import="com.liferay.wiki.model.WikiPage" %><%@
-page import="com.liferay.wiki.service.WikiNodeServiceUtil" %><%@
-page import="com.liferay.wiki.service.WikiPageLocalServiceUtil" %><%@
 page import="com.liferay.wiki.web.internal.display.context.logic.WikiPortletInstanceSettingsHelper" %><%@
 page import="com.liferay.wiki.web.internal.display.context.util.WikiRequestHelper" %><%@
-page import="com.liferay.wiki.web.util.WikiWebComponentProvider" %>
+page import="com.liferay.wiki.web.internal.util.WikiWebComponentProvider" %>
 
 <%
 WikiRequestHelper wikiRequestHelper = new WikiRequestHelper(request);
