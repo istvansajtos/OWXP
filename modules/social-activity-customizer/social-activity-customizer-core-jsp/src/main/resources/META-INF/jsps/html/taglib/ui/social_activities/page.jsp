@@ -57,6 +57,21 @@
 	<c:if test="<%= scopeGroup.isUser() %>">
 
 		<%
+		String activityType = ParamUtil.getString(request, "activityType");
+
+		System.out.println(">>> " + activityType + "<<<");
+		%>
+
+		<aui:select label="activity-type" name="user-activity-selector" id="user-activity-selector" onChange="filterByActivityType();" >
+			<aui:option label="All" value="ALL" selected='<%= (activityType == null) || (activityType.equals("ALL")) %>' />
+			<aui:option label="Commented" value="COMMENTED" selected='<%= activityType.equals("COMMENTED") %>' />
+			<aui:option label="Created" value="CREATED" selected='<%= activityType.equals("CREATED") %>' />
+			<aui:option label="Removed" value="REMOVED" selected='<%= activityType.equals("REMOVED") %>' />
+			<aui:option label="Restored" value="RESTORED" selected='<%= activityType.equals("RESTORED") %>' />
+			<aui:option label="Updated" value="UPDATED" selected='<%= activityType.equals("UPDATED") %>' />
+		</aui:select>
+
+		<%
 		for (SocialActivityDescriptor activityDescriptor : activityDescriptors) {
 			SocialActivityFeedEntry activityFeedEntry = activityDescriptor.interpret(selector, serviceContext);
 
@@ -178,3 +193,15 @@ private class FeedEntryHolder {
 
 }
 %>
+
+<aui:script use="aui-base" >
+	window.filterByActivityType = function() {
+		var uri = '<portlet:renderURL />';
+
+		var location = Liferay.Util.addParams('<portlet:namespace />activityType=' + A.one('#<portlet:namespace />user-activity-selector').get('value'), uri);
+
+		window.location.href = location;
+	};
+</aui:script>
+
+

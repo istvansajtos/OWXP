@@ -53,5 +53,4 @@ public class SocialActivitySetServiceOverride
 
 	@Reference
 	private CustomSocialActivitySetFinder _customSocialActivitySetFinder;
-
 }

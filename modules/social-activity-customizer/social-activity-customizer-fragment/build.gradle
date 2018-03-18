@@ -1,1 +1,5 @@
+dependencies {
+	compileOnly project(":modules:social-activity-customizer:social-activity-customizer-activities-query-helper")
+}
+
 group = "com.liferay.social.activity.customizer"

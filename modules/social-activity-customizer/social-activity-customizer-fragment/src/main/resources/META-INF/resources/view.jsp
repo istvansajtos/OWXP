@@ -14,7 +14,26 @@
  */
 --%>
 
+<%@page import="com.liferay.social.activity.customizer.activities.query.helper.CustomSocialActivitiesQueryHelper" %>
+<%@page import="com.liferay.portal.kernel.util.ParamUtil" %>
+<%@page import="com.liferay.petra.string.StringPool" %>
+
 <%@ include file="/init.jsp" %>
+
+<%
+CustomSocialActivitiesQueryHelper customSocialActivitiesQueryHelper = (CustomSocialActivitiesQueryHelper)request.getAttribute(SocialActivitiesWebKeys.SOCIAL_ACTIVITIES_QUERY_HELPER);
+
+socialActivitiesDisplayContext = new DefaultSocialActivitiesDisplayContext(socialActivitiesRequestHelper, customSocialActivitiesQueryHelper);
+
+String activityType = ParamUtil.getString(request, "activityType");
+long[] types = null;
+
+if (activityType != null && !activityType.equals("ALL")) {
+	types = new long[]{2};
+
+	customSocialActivitiesQueryHelper.setTypes(types);
+}
+%>
 
 <c:if test="<%= socialActivitiesDisplayContext.isTabsVisible() %>">
 	<liferay-ui:tabs
