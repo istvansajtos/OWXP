@@ -18,6 +18,7 @@ import aQute.bnd.annotation.ProviderType;
 
 import com.liferay.bookmarks.customizer.model.CustomBookmarksEntry;
 import com.liferay.bookmarks.customizer.service.CustomBookmarksEntryLocalService;
+import com.liferay.bookmarks.customizer.service.persistence.CustomBookmarksEntryFinder;
 import com.liferay.bookmarks.customizer.service.persistence.CustomBookmarksEntryPersistence;
 
 import com.liferay.portal.kernel.bean.BeanReference;
@@ -356,6 +357,25 @@ public abstract class CustomBookmarksEntryLocalServiceBaseImpl
 	}
 
 	/**
+	 * Returns the custom bookmarks entry finder.
+	 *
+	 * @return the custom bookmarks entry finder
+	 */
+	public CustomBookmarksEntryFinder getCustomBookmarksEntryFinder() {
+		return customBookmarksEntryFinder;
+	}
+
+	/**
+	 * Sets the custom bookmarks entry finder.
+	 *
+	 * @param customBookmarksEntryFinder the custom bookmarks entry finder
+	 */
+	public void setCustomBookmarksEntryFinder(
+		CustomBookmarksEntryFinder customBookmarksEntryFinder) {
+		this.customBookmarksEntryFinder = customBookmarksEntryFinder;
+	}
+
+	/**
 	 * Returns the counter local service.
 	 *
 	 * @return the counter local service
@@ -524,6 +544,8 @@ public abstract class CustomBookmarksEntryLocalServiceBaseImpl
 	protected CustomBookmarksEntryLocalService customBookmarksEntryLocalService;
 	@BeanReference(type = CustomBookmarksEntryPersistence.class)
 	protected CustomBookmarksEntryPersistence customBookmarksEntryPersistence;
+	@BeanReference(type = CustomBookmarksEntryFinder.class)
+	protected CustomBookmarksEntryFinder customBookmarksEntryFinder;
 	@ServiceReference(type = com.liferay.counter.kernel.service.CounterLocalService.class)
 	protected com.liferay.counter.kernel.service.CounterLocalService counterLocalService;
 	@ServiceReference(type = com.liferay.portal.kernel.service.ClassNameLocalService.class)

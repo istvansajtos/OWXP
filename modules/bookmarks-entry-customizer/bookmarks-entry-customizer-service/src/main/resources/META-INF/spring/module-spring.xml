@@ -3,4 +3,5 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" default-destroy-method="destroy" default-init-method="afterPropertiesSet" xsi:schemaLocation=" http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 	<bean class="com.liferay.bookmarks.customizer.service.impl.CustomBookmarksEntryLocalServiceImpl" id="com.liferay.bookmarks.customizer.service.CustomBookmarksEntryLocalService" />
 	<bean class="com.liferay.bookmarks.customizer.service.persistence.impl.CustomBookmarksEntryPersistenceImpl" id="com.liferay.bookmarks.customizer.service.persistence.CustomBookmarksEntryPersistence" parent="basePersistence" />
+	<bean class="com.liferay.bookmarks.customizer.service.persistence.impl.CustomBookmarksEntryFinderImpl" id="com.liferay.bookmarks.customizer.service.persistence.CustomBookmarksEntryFinder" parent="basePersistence" />
 </beans>
