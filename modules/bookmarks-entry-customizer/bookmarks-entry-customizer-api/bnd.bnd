@@ -1,0 +1,9 @@
+Bundle-Name: bookmarks-entry-customizer-api
+Bundle-SymbolicName: com.liferay.bookmarks.customizer.api
+Bundle-Version: 1.0.0
+Export-Package:\
+	com.liferay.bookmarks.customizer.exception,\
+	com.liferay.bookmarks.customizer.model,\
+	com.liferay.bookmarks.customizer.service,\
+	com.liferay.bookmarks.customizer.service.persistence
+-includeresource: META-INF/service.xml=../bookmarks-entry-customizer-service/service.xml
