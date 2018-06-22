@@ -17,6 +17,7 @@ package com.liferay.bookmarks.customizer.service;
 import aQute.bnd.annotation.ProviderType;
 
 import com.liferay.bookmarks.customizer.model.CustomBookmarksEntry;
+import com.liferay.bookmarks.model.BookmarksEntry;
 
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
@@ -197,6 +198,10 @@ public interface CustomBookmarksEntryLocalService extends BaseLocalService,
 	*/
 	public <T> List<T> dynamicQuery(DynamicQuery dynamicQuery, int start,
 		int end, OrderByComparator<T> orderByComparator);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<BookmarksEntry> getBookmarkEntries(long companyId, long userId,
+		java.lang.String url);
 
 	/**
 	* Returns a range of all the custom bookmarks entries.
