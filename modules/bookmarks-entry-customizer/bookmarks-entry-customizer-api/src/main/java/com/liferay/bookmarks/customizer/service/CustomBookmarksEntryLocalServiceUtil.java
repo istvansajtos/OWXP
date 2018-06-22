@@ -210,6 +210,11 @@ public class CustomBookmarksEntryLocalServiceUtil {
 				   .dynamicQuery(dynamicQuery, start, end, orderByComparator);
 	}
 
+	public static java.util.List<com.liferay.bookmarks.model.BookmarksEntry> getBookmarkEntries(
+		long companyId, long userId, java.lang.String url) {
+		return getService().getBookmarkEntries(companyId, userId, url);
+	}
+
 	/**
 	* Returns a range of all the custom bookmarks entries.
 	*

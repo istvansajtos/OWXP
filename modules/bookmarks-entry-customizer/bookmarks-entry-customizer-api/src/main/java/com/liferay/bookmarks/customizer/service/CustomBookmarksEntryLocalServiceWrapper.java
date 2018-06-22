@@ -220,6 +220,13 @@ public class CustomBookmarksEntryLocalServiceWrapper
 			start, end, orderByComparator);
 	}
 
+	@Override
+	public java.util.List<com.liferay.bookmarks.model.BookmarksEntry> getBookmarkEntries(
+		long companyId, long userId, java.lang.String url) {
+		return _customBookmarksEntryLocalService.getBookmarkEntries(companyId,
+			userId, url);
+	}
+
 	/**
 	* Returns a range of all the custom bookmarks entries.
 	*
