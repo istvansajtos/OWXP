@@ -16,7 +16,12 @@ package com.liferay.bookmarks.customizer.service.impl;
 
 import aQute.bnd.annotation.ProviderType;
 
+import java.util.List;
+
 import com.liferay.bookmarks.customizer.service.base.CustomBookmarksEntryLocalServiceBaseImpl;
+import com.liferay.bookmarks.customizer.service.persistence.CustomBookmarksEntryFinder;
+import com.liferay.bookmarks.model.BookmarksEntry;
+import com.liferay.portal.kernel.bean.BeanReference;
 
 /**
  * The implementation of the custom bookmarks entry local service.
@@ -40,4 +45,13 @@ public class CustomBookmarksEntryLocalServiceImpl
 	 *
 	 * Never reference this class directly. Always use {@link com.liferay.bookmarks.customizer.service.CustomBookmarksEntryLocalServiceUtil} to access the custom bookmarks entry local service.
 	 */
+
+	@Override
+	public List<BookmarksEntry> getBookmarkEntries(long companyId, long userId, String url) {
+		return _customBookmarksEntryFinder.findByC_U_U(
+			companyId, userId, url);
+	}
+
+	@BeanReference(type = CustomBookmarksEntryFinder.class)
+	private CustomBookmarksEntryFinder _customBookmarksEntryFinder;
 }
