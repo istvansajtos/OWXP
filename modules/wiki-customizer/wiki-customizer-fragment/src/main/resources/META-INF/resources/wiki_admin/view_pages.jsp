@@ -282,15 +282,85 @@ else {
 
 <liferay-util:include page="/wiki_admin/add_page_button.jsp" servletContext="<%= application %>" />
 
+<portlet:renderURL var="trashDialogURL" windowState="<%=LiferayWindowState.POP_UP.toString()%>">
+	<portlet:param name="mvcPath" value="/wiki_custom/trash_dialog.jsp"/>
+</portlet:renderURL>
+
 <aui:script>
 	function <portlet:namespace />deletePages() {
-		if (<%= TrashUtil.isTrashEnabled(scopeGroupId) %> || confirm(' <%= UnicodeLanguageUtil.get(request, "are-you-sure-you-want-to-delete-the-selected-entries") %>')) {
+		if (<%= TrashUtil.isTrashEnabled(scopeGroupId) %>) {
+			Liferay.Util.openWindow(
+				{
+					dialog: {
+						//cssClass: 'aui-popup-example',
+						destroyOnHide: true,
+						height: 400,
+						width: 400
+					},
+					dialogIframe: {
+						//bodyCssClass: 'custom-css-class'
+					},
+					title: 'Wiki Trash Management',
+					uri: '<%=trashDialogURL.toString()%>'
+				}
+			);
+		}
+		else if (confirm(' <%= UnicodeLanguageUtil.get(request, "are-you-sure-you-want-to-delete-the-selected-entries") %>')) {
 			var form = AUI.$(document.<portlet:namespace />fm);
 
 			form.attr('method', 'post');
-			form.fm('<%= Constants.CMD %>').val('<%= TrashUtil.isTrashEnabled(scopeGroupId) ? Constants.MOVE_TO_TRASH : Constants.DELETE %>');
+			form.fm('<%= Constants.CMD %>').val('<%= Constants.DELETE %>');
 
-			submitForm(form, '<portlet:actionURL name="/wiki/edit_page" />');
+			submitForm(form, '<portlet:actionURL name="/wiki/custom_edit_page" />');
 		}
 	}
+</aui:script>
+
+<aui:button id="openDiv" value="Open Popup Using Modal Dialog" />
+
+<br>
+<div id="my-content-div">
+	<div>
+		DIVContent Is Rendered In The AUI Modal Popup.
+		
+	</div>
+</div>
+
+<aui:button-row>
+			<aui:button id="moveToTrash" value="move-to-trash" />
+		
+			<aui:button id="moveUnderRootPage" value="move-under-the-root-page" />
+		</aui:button-row>
+
+<!-- AUI Script For Modal Dialog POPUP -->
+<aui:script use="aui-modal,aui-overlay-manager">
+A.one("#<portlet:namespace />openDiv").on('click',function(event){
+	var dialog = new A.Modal({
+		title: "AUI Modal Popup Title",
+		bodyContent: A.one("#my-content-div").html(),
+		headerContent: 'AUI Modal Heading',
+		centered: true,
+		modal: true,
+		height: 200,
+		width:300,
+		render: '#my-content-div',
+		close: true
+	});
+	dialog.render();
+});
+</aui:script>
+
+<aui:script position="inline" use="aui-base">
+	var moveToTrashButton = A.one('#<portlet:namespace />moveToTrash');
+	moveToTrashButton.on('click',
+		function() {
+			alert("start");
+			var form = AUI.$(document.<portlet:namespace />fm);
+
+			form.attr('method', 'post');
+			form.fm('<%= Constants.CMD %>').val('<%= Constants.MOVE_TO_TRASH %>');
+
+			submitForm(form, '<portlet:actionURL name="/wiki/custom_edit_page" />');
+		}
+	);
 </aui:script>

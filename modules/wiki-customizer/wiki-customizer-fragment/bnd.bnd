@@ -1,4 +1,4 @@
 Bundle-Name: wiki-customizer-fragment
-Bundle-SymbolicName: wiki.customizer.fragment
+Bundle-SymbolicName: com.liferay.wiki.customizer.fragment
 Bundle-Version: 1.0.0
-Fragment-Host: com.liferay.wiki.web;bundle-version="3.0.9.hotfix-2409-7010"
+Fragment-Host: com.liferay.wiki.web;bundle-version="3.0.9.hotfix-3000-7010"

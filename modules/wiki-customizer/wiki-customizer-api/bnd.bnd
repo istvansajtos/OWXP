@@ -2,8 +2,8 @@ Bundle-Name: wiki-customizer-api
 Bundle-SymbolicName: com.liferay.wiki.customizer.api
 Bundle-Version: 1.0.0
 Export-Package:\
-	com.liferay.wiki.customizer.service.exception,\
-	com.liferay.wiki.customizer.service.model,\
-	com.liferay.wiki.customizer.service.service,\
-	com.liferay.wiki.customizer.service.service.persistence
+	com.liferay.wiki.customizer.exception,\
+	com.liferay.wiki.customizer.model,\
+	com.liferay.wiki.customizer.service,\
+	com.liferay.wiki.customizer.service.persistence
 -includeresource: META-INF/service.xml=../wiki-customizer-service/service.xml

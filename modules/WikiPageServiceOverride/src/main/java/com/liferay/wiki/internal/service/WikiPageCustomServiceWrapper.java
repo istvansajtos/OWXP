@@ -19,23 +19,39 @@ import com.liferay.mentions.configuration.MentionsGroupServiceConfiguration;
 import com.liferay.mentions.util.MentionsNotifier;
 import com.liferay.mentions.util.MentionsUtil;
 import com.liferay.petra.string.StringPool;
+import com.liferay.asset.kernel.service.AssetEntryLocalService;
+import com.liferay.portal.kernel.comment.CommentManagerUtil;
 import com.liferay.portal.kernel.diff.DiffHtmlUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.notifications.UserNotificationDefinition;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
+import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
+import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.search.Indexer;
+import com.liferay.portal.kernel.search.IndexerRegistryUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceWrapper;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.settings.LocalizedValuesMap;
+import com.liferay.portal.kernel.social.SocialActivityManagerUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.NotificationThreadLocal;
+import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.SubscriptionSender;
+import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.social.kernel.model.SocialActivityConstants;
+import com.liferay.trash.kernel.exception.TrashEntryException;
+import com.liferay.trash.kernel.model.TrashEntry;
+import com.liferay.trash.kernel.util.TrashUtil;
 import com.liferay.wiki.configuration.WikiGroupServiceOverriddenConfiguration;
 import com.liferay.wiki.constants.WikiConstants;
 import com.liferay.wiki.constants.WikiPortletKeys;
@@ -43,12 +59,19 @@ import com.liferay.wiki.engine.impl.WikiEngineRenderer;
 import com.liferay.wiki.model.WikiNode;
 import com.liferay.wiki.model.WikiPage;
 import com.liferay.wiki.model.WikiPageConstants;
+import com.liferay.wiki.model.WikiPageResource;
 import com.liferay.wiki.service.WikiPageLocalService;
 import com.liferay.wiki.service.WikiPageLocalServiceWrapper;
+import com.liferay.wiki.service.persistence.WikiPagePersistence;
+import com.liferay.wiki.service.persistence.WikiPageResourcePersistence;
 import com.liferay.wiki.util.WikiUtil;
+import com.liferay.wiki.util.comparator.PageVersionComparator;
+import com.liferay.trash.kernel.service.TrashEntryLocalService;
 
 import java.io.Serializable;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -108,6 +131,134 @@ public class WikiPageCustomServiceWrapper extends WikiPageLocalServiceWrapper {
 
 		if (!ExportImportThreadLocal.isImportInProcess()) {
 			super.subscribePage(userId, nodeId, title);
+		}
+
+		return page;
+	}
+
+	@Override
+	public WikiPage movePageToTrash(long userId, WikiPage page)
+		throws PortalException {
+
+		System.out.println("in_serviceOverride_module");
+		if (page.isInTrash()) {
+			throw new TrashEntryException();
+		}
+
+		// Page
+
+		int oldStatus = page.getStatus();
+		String oldTitle = page.getTitle();
+
+		if (oldStatus == WorkflowConstants.STATUS_PENDING) {
+			page.setStatus(WorkflowConstants.STATUS_DRAFT);
+
+			_wikiPagePersistence.update(page);
+		}
+
+		List<WikiPage> pageVersions = _wikiPagePersistence.findByR_N_H(
+			page.getResourcePrimKey(), page.getNodeId(), false);
+
+		pageVersions = ListUtil.sort(pageVersions, new PageVersionComparator());
+
+		List<ObjectValuePair<Long, Integer>> pageVersionStatusOVPs =
+			new ArrayList<>();
+
+		if ((pageVersions != null) && !pageVersions.isEmpty()) {
+			pageVersionStatusOVPs = getPageVersionStatuses(pageVersions);
+		}
+
+		page = updateStatus(
+			userId, page, WorkflowConstants.STATUS_IN_TRASH,
+			new ServiceContext(), new HashMap<String, Serializable>());
+
+		// Trash
+
+		WikiPageResource pageResource =
+			_wikiPageResourcePersistence.fetchByPrimaryKey(
+				page.getResourcePrimKey());
+
+		UnicodeProperties typeSettingsProperties = new UnicodeProperties();
+
+		typeSettingsProperties.put("title", page.getTitle());
+
+		TrashEntry trashEntry = _trashEntryLocalService.addTrashEntry(
+			userId, page.getGroupId(), WikiPage.class.getName(),
+			page.getResourcePrimKey(), page.getUuid(), null, oldStatus,
+			pageVersionStatusOVPs, typeSettingsProperties);
+
+		String trashTitle = TrashUtil.getTrashTitle(trashEntry.getEntryId());
+
+		for (WikiPage pageVersion : pageVersions) {
+			pageVersion.setTitle(trashTitle);
+			pageVersion.setStatus(WorkflowConstants.STATUS_IN_TRASH);
+
+			_wikiPagePersistence.update(pageVersion);
+		}
+
+		pageResource.setTitle(trashTitle);
+
+		_wikiPageResourcePersistence.update(pageResource);
+
+		page.setTitle(trashTitle);
+
+		_wikiPagePersistence.update(page);
+
+		// Child pages
+
+/*		moveDependentChildPagesToTrash(
+			page.getNodeId(), oldTitle, trashTitle, trashEntry.getEntryId(),
+			true);*/
+		moveDependentChildPagesToRoot(page.getNodeId(), oldTitle);
+
+		// Redirect pages
+
+/*		moveDependentRedirectorPagesToTrash(
+			page.getNodeId(), oldTitle, trashTitle, trashEntry.getEntryId(),
+			true);*/
+
+		// Asset
+
+		_assetEntryLocalService.updateVisible(
+			WikiPage.class.getName(), page.getResourcePrimKey(), false);
+
+		// Attachments
+
+		for (FileEntry fileEntry : page.getAttachmentsFileEntries()) {
+			PortletFileRepositoryUtil.movePortletFileEntryToTrash(
+				userId, fileEntry.getFileEntryId());
+		}
+
+		// Comment
+
+		CommentManagerUtil.moveDiscussionToTrash(
+			WikiPage.class.getName(), page.getResourcePrimKey());
+
+		// Social
+
+		JSONObject extraDataJSONObject = JSONFactoryUtil.createJSONObject();
+
+		extraDataJSONObject.put(
+			"title", TrashUtil.getOriginalTitle(page.getTitle()));
+		extraDataJSONObject.put("version", page.getVersion());
+
+		SocialActivityManagerUtil.addActivity(
+			userId, page, SocialActivityConstants.TYPE_MOVE_TO_TRASH,
+			extraDataJSONObject.toString(), 0);
+
+		// Indexer
+
+		Indexer<WikiPage> indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+			WikiPage.class);
+
+		indexer.reindex(page);
+
+		// Workflow
+
+		if (oldStatus == WorkflowConstants.STATUS_PENDING) {
+			workflowInstanceLinkLocalService.deleteWorkflowInstanceLink(
+				page.getCompanyId(), page.getGroupId(),
+				WikiPage.class.getName(), page.getPageId());
 		}
 
 		return page;
@@ -232,6 +383,20 @@ public class WikiPageCustomServiceWrapper extends WikiPageLocalServiceWrapper {
 		portletURL.setParameter("type", "html");
 
 		return portletURL.toString();
+	}
+
+	protected void moveDependentChildPagesToRoot(
+			long parentNodeId, String parentTitle)
+		throws PortalException {
+
+		List<WikiPage> childPages = _wikiPagePersistence.findByN_H_P(
+			parentNodeId, true, parentTitle);
+
+		for (WikiPage childPage : childPages) {
+			childPage.setParentTitle(null);
+
+			_wikiPagePersistence.update(childPage);
+		}
 	}
 
 	protected void notifySubscribers(
@@ -384,6 +549,13 @@ public class WikiPageCustomServiceWrapper extends WikiPageLocalServiceWrapper {
 	}
 
 	@Reference(unbind = "-")
+	protected void setAssetEntryLocalService(
+		AssetEntryLocalService assetEntryLocalService) {
+
+		_assetEntryLocalService = assetEntryLocalService;
+	}
+
+	@Reference(unbind = "-")
 	protected void setConfigurationProvider(
 		ConfigurationProvider configurationProvider) {
 
@@ -409,9 +581,39 @@ public class WikiPageCustomServiceWrapper extends WikiPageLocalServiceWrapper {
 		_wikiPageLocalService = wikiPageLocalService;
 	}
 
+	@Reference(unbind = "-")
+	protected void setWikiPagePersistence(
+		WikiPagePersistence wikiPagePersistence) {
+
+		_wikiPagePersistence = wikiPagePersistence;
+	}
+
+	@Reference(unbind = "-")
+	protected void setWikiPageResourcePersistence(
+		WikiPageResourcePersistence wikiPageResourcePersistence) {
+
+		_wikiPageResourcePersistence = wikiPageResourcePersistence;
+	}
+
+	@Reference(unbind = "-")
+	protected void setTrashEntryLocalService(
+		TrashEntryLocalService trashEntryLocalService) {
+
+		_trashEntryLocalService = trashEntryLocalService;
+	}
+
+	private AssetEntryLocalService _assetEntryLocalService;
 	private ConfigurationProvider _configurationProvider;
 	private MentionsNotifier _mentionsNotifier;
 	private WikiEngineRenderer _wikiEngineRenderer;
 	private WikiPageLocalService _wikiPageLocalService;
+	private WikiPagePersistence _wikiPagePersistence;
+	private WikiPageResourcePersistence _wikiPageResourcePersistence;
+	private TrashEntryLocalService _trashEntryLocalService;
+
+/*	@BeanReference(type = WikiPagePersistence.class)
+	protected WikiPagePersistence wikiPagePersistence;
+	@BeanReference(type = WikiPageResourcePersistence.class)
+	protected WikiPageResourcePersistence wikiPageResourcePersistence;*/
 
 }
